@@ -27,9 +27,6 @@ check rs = rowFound || colFound || diagFound
         checkCol' n [] = True
         checkCol' n (r:rs) = let (Cell _ b) = r !! n in b && checkCol' n rs
         diagFound = False
-        --bt = (fmap . fmap) (\(Cell _ b) -> b) rs
-        --diag1 = get 0 0 bt && get 1 1 bt && get 2 2 bt && get 3 3 bt && get 4 4 bt
-        --diag2 = get 0 4 bt && get 1 3 bt && get 2 2 bt && get 3 1 bt && get 4 0 bt
   
 callList :: [Card] -> [Int] -> [Card]
 callList cs [] = cs
@@ -43,6 +40,20 @@ getWinner cs (x:xs) = if won then (winner, x) else getWinner succ xs
         winner = winner' succ
         winner' (x:xs) = if check x then x else winner' xs
         winner' [] = error "checking for winner that does not exist"
+
+getLoser :: [Card] -> [Int] -> (Card, Int)
+getLoser cs [] = error "no loser"
+getLoser cs (x:xs) = if loser then getWinningNumber theLoser xs else getLoser succ xs
+  where succ = call cs x
+        succ' = filter (\x -> not $ check x) succ
+        loser = length succ' == 1 
+        theLoser = head succ'
+
+getWinningNumber :: Card -> [Int] -> (Card, Int)
+getWinningNumber c [] = error "no winning number"
+getWinningNumber c (x:xs) = if won then (head c', x) else getWinningNumber (head c') xs
+  where c' = call [c] x
+        won = check (head c')
 
 
 wordsWhen :: (Char -> Bool) -> String -> [String]
@@ -75,9 +86,10 @@ solve = do
       callNumbers = fmap read (wordsWhen (== ',') seq)
       rawCards = tail ln
       cards = makeCards (fmap read (foldr (++) [] (words <$> rawCards))) in
-        let (c, i) = getWinner cards callNumbers
+        let (c, i) = getLoser cards callNumbers
             unmarked = filter (\(Cell _ b) -> not b) (concat c)
             asInts = fmap (\(Cell i _) -> i) unmarked in
+              --return (asInts, i)
               print $ (sum asInts) * i
 
         
